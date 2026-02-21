@@ -2,6 +2,7 @@ package pl.kamil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.kamil.dtos.HttpRequest;
 
 import java.io.*;
 import java.util.HashMap;
@@ -11,13 +12,15 @@ public class HttpRequestParser {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRequestParser.class);
 
-    public void parse(InputStream in) throws IOException {
+    public HttpRequest parse(InputStream in) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         HttpRequest request = new HttpRequest();
 
         // Parse Request Line
         String firstLine = reader.readLine();
-        if (firstLine == null || firstLine.isEmpty()) return;
+        if (firstLine == null || firstLine.isEmpty()){
+            throw new RuntimeException("First line was null or empty");
+        }
 
         request.setMethod(extractMethod(firstLine));
         request.setPath(extractPath(firstLine));
@@ -35,6 +38,7 @@ public class HttpRequestParser {
         }
 
         log.info("Successfully parsed {} request for {}", request.getMethod(), request.getPath());
+        return request;
     }
 
     private String extractMethod(String line) {
