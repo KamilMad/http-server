@@ -1,4 +1,4 @@
-package pl.kamil;
+package pl.kamil.dtos;
 
 import java.util.Arrays;
 import java.util.HashMap;
