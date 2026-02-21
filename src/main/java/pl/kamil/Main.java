@@ -2,7 +2,8 @@ package pl.kamil;
 
 public class Main {
     public static void main(String[] args) {
-        SimpleHttpServer server = new SimpleHttpServer();
+        HttpRequestParser httpRequestParser = new HttpRequestParser();
+        SimpleHttpServer server = new SimpleHttpServer(httpRequestParser);
         server.start();
     }
 }
