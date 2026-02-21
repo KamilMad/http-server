@@ -47,7 +47,7 @@ public class SimpleHttpServer {
              InputStream in = clientSocket.getInputStream();
              OutputStream out = clientSocket.getOutputStream()) {
 
-            httpRequestParser.parse(clientSocket.getInputStream());
+            httpRequestParser.parse(in);
             Thread.sleep(3000);
 
             String response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
