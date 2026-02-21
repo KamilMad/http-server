@@ -15,7 +15,7 @@ public class ServerTest {
     public void setUp() {
         new Thread(() -> {
             HttpRequestParser parser = new HttpRequestParser();
-            SimpleHttpServer server = new SimpleHttpServer(parser);
+            SimpleHttpServer server = new SimpleHttpServer(parser, 10);
             server.start();
         }).start();
 
