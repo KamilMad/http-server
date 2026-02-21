@@ -2,6 +2,10 @@ package pl.kamil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.kamil.dtos.HttpRequest;
+import pl.kamil.dtos.HttpResponse;
+import pl.kamil.utils.ContentType;
+import pl.kamil.utils.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +33,7 @@ public class SimpleHttpServer {
             server.bind(new InetSocketAddress(8080));
             logger.info("Server listening on port {}" , 8080);
 
+
             while (true) {
                 try {
                     Socket clientSocket = server.accept();
@@ -43,20 +48,24 @@ public class SimpleHttpServer {
     }
 
     private void handleClient(Socket clientSocket) {
+        HttpResponse response = new HttpResponse();
         try (clientSocket;
              InputStream in = clientSocket.getInputStream();
              OutputStream out = clientSocket.getOutputStream()) {
 
-            httpRequestParser.parse(clientSocket.getInputStream());
+            HttpRequest request = httpRequestParser.parse(in);
             Thread.sleep(3000);
 
-            String response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+            response.setStatus(HttpStatus.OK);
             out.write(response.getBytes());
             out.flush();
 
             logger.info("Client handled successfully.");
         } catch (Exception e) {
             logger.error("Error handling client: {}", e.getMessage());
+            response.setStatus(HttpStatus.BAD_REQUEST);
+            response.setContentType(ContentType.TEXT);
+            response.setBody("Invalid Request Format".getBytes());
         }
     }
 }
