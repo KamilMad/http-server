@@ -1,9 +1,7 @@
-package pl.kamil.dtos;
+package pl.kamil.protocol;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.kamil.utils.ContentType;
-import pl.kamil.utils.HttpStatus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,9 +33,9 @@ public class HttpResponse {
 
         // Status Line
         response.write(httpVersion.getBytes());// Http Version
-        response.write(" ".getBytes()); // empty space
+        response.write(" ".getBytes()); // Empty space
         response.write(status.toString().getBytes()); // Status Code and Message
-        response.write("\r\n".getBytes()); // Empty Line
+        response.write("\r\n".getBytes()); // End of Status Line
         log.info("Successfully wrote the status line");
 
         // Headers

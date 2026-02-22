@@ -1,4 +1,4 @@
-package pl.kamil.utils;
+package pl.kamil.protocol;
 
 public enum HttpStatus {
     OK(200, "OK"),
