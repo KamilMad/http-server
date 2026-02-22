@@ -1,8 +1,9 @@
-package pl.kamil;
+package pl.kamil.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.kamil.dtos.HttpRequest;
+import pl.kamil.protocol.HttpRequest;
+import pl.kamil.protocol.HttpMethod;
 
 import java.io.*;
 import java.util.HashMap;
@@ -22,7 +23,7 @@ public class HttpRequestParser {
             throw new RuntimeException("First line was null or empty");
         }
 
-        request.setMethod(extractMethod(firstLine));
+        request.setMethod(HttpMethod.valueOf(extractMethod(firstLine)));
         request.setPath(extractPath(firstLine));
 
         // Parse Headers

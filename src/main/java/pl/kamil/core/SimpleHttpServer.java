@@ -1,11 +1,11 @@
-package pl.kamil;
+package pl.kamil.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.kamil.dtos.HttpRequest;
-import pl.kamil.dtos.HttpResponse;
-import pl.kamil.utils.ContentType;
-import pl.kamil.utils.HttpStatus;
+import pl.kamil.protocol.HttpRequest;
+import pl.kamil.protocol.HttpResponse;
+import pl.kamil.protocol.ContentType;
+import pl.kamil.protocol.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,11 +20,13 @@ public class SimpleHttpServer {
 
     private final HttpRequestParser httpRequestParser;
     private final ExecutorService executorService;
+    private final Registry registry;
     private static final Logger logger = LoggerFactory.getLogger(SimpleHttpServer.class);
 
-    public SimpleHttpServer(HttpRequestParser httpRequestParser, int poolSize) {
+    public SimpleHttpServer(HttpRequestParser httpRequestParser, int poolSize, Registry registry) {
         this.httpRequestParser = httpRequestParser;
         this.executorService = Executors.newFixedThreadPool(poolSize);
+        this.registry = registry;
     }
 
     public void start() {
@@ -56,7 +58,8 @@ public class SimpleHttpServer {
             HttpRequest request = httpRequestParser.parse(in);
             Thread.sleep(3000);
 
-            response.setStatus(HttpStatus.OK);
+
+            response = registry.dispatch(request);
             out.write(response.getBytes());
             out.flush();
 

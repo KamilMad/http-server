@@ -1,4 +1,4 @@
-package pl.kamil.utils;
+package pl.kamil.protocol;
 
 public enum ContentType {
     HTML("text/html"),

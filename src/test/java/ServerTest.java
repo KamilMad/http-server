@@ -9,8 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.kamil.HttpRequestParser;
-import pl.kamil.SimpleHttpServer;
+import pl.kamil.core.HttpRequestParser;
+import pl.kamil.core.SimpleHttpServer;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -22,7 +22,7 @@ public class ServerTest {
     public void setUp() {
         new Thread(() -> {
             HttpRequestParser parser = new HttpRequestParser();
-            SimpleHttpServer server = new SimpleHttpServer(parser, 10);
+            SimpleHttpServer server = new SimpleHttpServer(parser, 10, null);
             server.start();
         }).start();
 
