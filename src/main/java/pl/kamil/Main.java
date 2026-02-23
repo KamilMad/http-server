@@ -3,14 +3,20 @@ package pl.kamil;
 import pl.kamil.core.HttpRequestParser;
 import pl.kamil.core.Registry;
 import pl.kamil.core.SimpleHttpServer;
+import pl.kamil.handlers.Handler;
+import pl.kamil.handlers.StaticFileHandler;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.ContentType;
 import pl.kamil.protocol.HttpMethod;
 import pl.kamil.protocol.HttpStatus;
 
+import java.nio.file.Path;
+
 public class Main {
     public static void main(String[] args) {
-        Registry registry = new Registry();
+        Handler handler = new StaticFileHandler(Path.of("public").toAbsolutePath());
+        Registry registry = new Registry(handler);
+
         registry.addRoute(HttpMethod.GET.toString(), "/JSON", (request) -> {
             HttpResponse response = new HttpResponse();
             response.setStatus(HttpStatus.OK);

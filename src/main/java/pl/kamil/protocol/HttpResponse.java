@@ -20,6 +20,10 @@ public class HttpResponse {
     public HttpResponse() {
     }
 
+    public HttpResponse(HttpStatus status) {
+        this.status = status;
+    }
+
     public HttpResponse(HttpStatus status, Map<String, String> headers, ContentType contentType, byte[] body) {
         this.status = status;
         this.headers = headers;
