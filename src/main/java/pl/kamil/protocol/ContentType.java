@@ -3,8 +3,9 @@ package pl.kamil.protocol;
 public enum ContentType {
     HTML("text/html"),
     JSON("text/json"),
-    TEXT("plain/text"),
-    IMAGE_PNG("image/png");
+    TEXT("text/plain"),
+    IMAGE_PNG("image/png"),
+    OCTET("application/octet-stream");
 
     private final String value;
 

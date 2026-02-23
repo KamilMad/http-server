@@ -14,26 +14,29 @@ import java.util.Map;
 
 public class Registry {
     private static final Logger log = LoggerFactory.getLogger(Registry.class);
-    public static Map<Route, Handler> COMMANDS = new HashMap<>();
+    public final Map<Route, Handler> commands = new HashMap<>();
+    private final Handler staticFileHandler;
+
+    public Registry(Handler handler) {
+        this.staticFileHandler = handler;
+    }
 
     public void addRoute(String httpMethod, String path, Handler handler) {
-        COMMANDS.put(new Route(HttpMethod.valueOf(httpMethod), path), handler);
+        commands.put(new Route(HttpMethod.valueOf(httpMethod), path), handler);
     }
 
     public HttpResponse dispatch(HttpRequest request) {
-        HttpMethod method = request.getMethod();
-        String path = request.getPath();
-        log.info("Successfully extracted method and path");
-
-        Route route = new Route(method, path);
-
-        Handler handler = COMMANDS.get(route);
+        // Try to find an exact match (handler register in the registry)
+        Route route = new Route(request.getMethod(), request.getPath());
+        Handler handler = commands.get(route);
 
         if (handler != null) {
             return handler.handle(request);
         }
 
-        return createNotFoundResponse();
+        // If no match exists , try the file system
+        // The static handler will return 404 if file not found
+        return this.staticFileHandler.handle(request);
     }
 
     private HttpResponse createNotFoundResponse() {
