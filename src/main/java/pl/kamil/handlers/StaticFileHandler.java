@@ -25,9 +25,12 @@ public class StaticFileHandler implements Handler{
         HttpResponse response = new HttpResponse();
 
         try {
+            log.info("Requested path {}", request.getPath());
             // remove leading "/" so resolve() works correctly
             String requestedPath = request.getPath().startsWith("/") ?
                     request.getPath().substring(1) : request.getPath();
+            log.info("Requested path {}", requestedPath);
+
             // concat both paths
             Path filePath = rootDirectory.resolve(requestedPath).normalize();
             log.info("Path: {}", filePath);
