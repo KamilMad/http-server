@@ -34,9 +34,13 @@ public class Registry {
             return handler.handle(request);
         }
 
+        if (request.getMethod() == HttpMethod.GET) {
+            return staticFileHandler.handle(request);
+        }
+
         // If no match exists , try the file system
         // The static handler will return 404 if file not found
-        return this.staticFileHandler.handle(request);
+        return HttpResponse.error(HttpStatus.NOT_ALLOWED);
     }
 
     private HttpResponse createNotFoundResponse() {
