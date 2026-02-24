@@ -2,16 +2,19 @@ package pl.kamil.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.kamil.protocol.ContentType;
 import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.HttpStatus;
+import pl.kamil.utility.MimeTypes;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class StaticFileHandler implements Handler{
+public class StaticFileHandler implements Handler {
 
     private static final Logger log = LoggerFactory.getLogger(StaticFileHandler.class);
     private final Path rootDirectory;
@@ -22,47 +25,93 @@ public class StaticFileHandler implements Handler{
 
     @Override
     public HttpResponse handle(HttpRequest request) {
-        HttpResponse response = new HttpResponse();
-
         try {
-            log.info("Requested path {}", request.getPath());
-            // remove leading "/" so resolve() works correctly
-            String requestedPath = request.getPath().startsWith("/") ?
-                    request.getPath().substring(1) : request.getPath();
-            log.info("Requested path {}", requestedPath);
+            // converts URL string to a clean Path
+            Path requestedPath = getNormalizePath(request.getPath());
 
-            // concat both paths
-            Path filePath = rootDirectory.resolve(requestedPath).normalize();
-            log.info("Path: {}", filePath);
+            // Validate if path is safe
+            validatePathSecurity(requestedPath);
 
-            // check if request want to access parent dir
-            if (!filePath.startsWith(rootDirectory)) {
-                log.error("Client wanted to access parent directory");
-                return new HttpResponse(HttpStatus.FORBIDDEN);
-            }
+            // If the path is a directory, we follow the standard convention of serving index.html
+            Path finalPath = resolveResourcePath(requestedPath);
 
-            if (Files.exists(filePath) && !Files.isDirectory(filePath)) {
-                byte[] content;
-                String contentType;
+            return serveFile(finalPath);
 
-                contentType = Files.probeContentType(filePath);
-                content = Files.readAllBytes(filePath);
-                createResponse(response, content, contentType);
-
-            } else {
-                log.error("File not found");
-                response.setStatus(HttpStatus.NOT_FOUND);
-            }
-        }catch (IOException e) {
-            log.error("Internal server error");
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (SecurityException e) {
+            log.error("Security violation {}", e.getMessage());
+            return HttpResponse.error(HttpStatus.FORBIDDEN);
+        } catch (FileNotFoundException e) {
+            log.error("File not found {}", e.getMessage());
+            return HttpResponse.error(HttpStatus.NOT_FOUND);
+        } catch (IOException e) {
+            log.error("IO Error serving file {}", e.getMessage());
+            return HttpResponse.error(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return response;
     }
 
-    public void createResponse(HttpResponse response, byte[] body, String contentType) {
-        response.setStatus(HttpStatus.OK);
-        response.setHeaders(Map.of("Content-Type", contentType));
-        response.setBody(body);
+    private HttpResponse serveFile(Path filePath) throws IOException {
+        byte[] content = Files.readAllBytes(filePath);
+        String contentType = resolveContentType(filePath);
+
+        return HttpResponse.ok(content, contentType);
+    }
+
+    private Path resolveResourcePath(Path path) throws FileNotFoundException {
+        Path actualPath = Files.isDirectory(path) ? path.resolve("index.html") : path;
+
+        if (Files.notExists(actualPath)) {
+            throw new FileNotFoundException("Resource does not exist: " + actualPath);
+        }
+
+        return actualPath;
+    }
+
+    private void validatePathSecurity(Path filePath) {
+        if (!filePath.startsWith(rootDirectory)) {
+            log.error("Client wanted to access parent directory");
+            throw new SecurityException("Directory traversal attempt");
+        }
+    }
+
+    private Path getNormalizePath(String path) {
+        // remove leading '/' so resolve() works correctly
+        String requestedPath = path.startsWith("/") ?
+                path.substring(1).trim() : path;
+        log.info("Requested path {}", requestedPath);
+
+        // concat root and requestedPath
+        return rootDirectory.resolve(requestedPath).normalize();
+    }
+
+    private String resolveContentType(Path filePath) {
+        try {
+            String type = Files.probeContentType(filePath);
+
+            if (type != null) {
+               return type;
+            }
+
+        } catch (IOException e) {
+            log.warn("Could not probe content type for {}", filePath);
+        }
+
+        // manual fall back
+        return mapExtensionToMimeType(filePath.toString().toLowerCase());
+    }
+
+    private String mapExtensionToMimeType(String fileName) {
+        int lastDotIndex = fileName.lastIndexOf('.');
+
+        // If there's no dot, or the dot is the very last character, we can't find an extension`
+        if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
+            return "application/octet-stream";
+        }
+
+        String extension = fileName.substring(lastDotIndex + 1);
+
+        return MimeTypes.MIME_TYPES.getOrDefault(
+                extension,
+                "application/octet-stream"
+        );
     }
 }

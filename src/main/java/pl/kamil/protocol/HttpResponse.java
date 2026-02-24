@@ -31,6 +31,22 @@ public class HttpResponse {
         this.body = body;
     }
 
+    public static HttpResponse error(HttpStatus status) {
+        HttpResponse response = new HttpResponse(status);
+        response.setBody(("Error: " + status.getMessage()).getBytes());
+
+        return response;
+    }
+
+    public static HttpResponse ok(byte[] body, String contentType) {
+        HttpResponse response = new HttpResponse();
+        response.addHeader("Content-Type", contentType);
+        response.addHeader("Content-Length", String.valueOf(body.length));
+        response.setBody(body);
+
+        return response;
+    }
+
 
     public byte[] getBytes() throws IOException {
         ByteArrayOutputStream response = new ByteArrayOutputStream();
@@ -100,6 +116,9 @@ public class HttpResponse {
         this.headers = headers;
     }
 
+    public void addHeader(String name, String value) {
+        this.headers.put(name, value);
+    }
     @Override
     public String toString() {
         return "HttpResponse{" +
