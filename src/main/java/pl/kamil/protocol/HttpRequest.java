@@ -9,6 +9,7 @@ public class HttpRequest{
     private String path;
     private Map<String, String> headers;
     private byte[] body;
+    private Map<String, String> queryParams;
 
     public HttpRequest() {
         this.headers = new HashMap<>();
@@ -46,13 +47,22 @@ public class HttpRequest{
         this.body = body;
     }
 
+    public Map<String, String> getQueryParams() {
+        return queryParams;
+    }
+
+    public void setQueryParams(Map<String, String> queryParams) {
+        this.queryParams = queryParams;
+    }
+
     @Override
     public String toString() {
         return "HttpRequest{" +
-                "method='" + method + '\'' +
+                "method=" + method +
                 ", path='" + path + '\'' +
                 ", headers=" + headers +
                 ", body=" + Arrays.toString(body) +
+                ", queryParams=" + queryParams +
                 '}';
     }
 }
