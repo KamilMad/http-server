@@ -6,13 +6,14 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HttpResponse {
     private static final Logger log = LoggerFactory.getLogger(HttpResponse.class);
     private final String httpVersion = "HTTP/1.1";
     private HttpStatus status;
-    private Map<String, String> headers;
+    private Map<String, String> headers = new HashMap<>();
     private ContentType contentType;
     private byte[] body;
 
@@ -40,9 +41,17 @@ public class HttpResponse {
 
     public static HttpResponse ok(byte[] body, String contentType) {
         HttpResponse response = new HttpResponse();
+        response.setStatus(HttpStatus.OK);
         response.addHeader("Content-Type", contentType);
         response.addHeader("Content-Length", String.valueOf(body.length));
         response.setBody(body);
+
+        return response;
+    }
+
+    public static HttpResponse created() {
+        HttpResponse response = new HttpResponse();
+        response.setStatus(HttpStatus.CREATED);
 
         return response;
     }

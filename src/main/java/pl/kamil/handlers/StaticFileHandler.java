@@ -7,6 +7,7 @@ import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.HttpStatus;
 import pl.kamil.utility.MimeTypes;
+import pl.kamil.utility.PathUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -16,10 +17,13 @@ import java.util.Map;
 
 public class StaticFileHandler implements Handler {
 
+    private final PathUtils pathUtils;
+
     private static final Logger log = LoggerFactory.getLogger(StaticFileHandler.class);
     private final Path rootDirectory;
 
-    public StaticFileHandler(Path rootDirectory) {
+    public StaticFileHandler(PathUtils pathUtils, Path rootDirectory) {
+        this.pathUtils = pathUtils;
         this.rootDirectory = rootDirectory;
     }
 
@@ -27,14 +31,11 @@ public class StaticFileHandler implements Handler {
     public HttpResponse handle(HttpRequest request) {
         try {
             // converts URL string to a clean Path
-            Path requestedPath = getNormalizePath(request.getPath());
-
+            Path safePath = pathUtils.getNormalizePath(rootDirectory, request.getPath());
             // Validate if path is safe
-            validatePathSecurity(requestedPath);
-
+            pathUtils.validatePathSecurity(rootDirectory, safePath);
             // If the path is a directory, we follow the standard convention of serving index.html
-            Path finalPath = resolveResourcePath(requestedPath);
-
+            Path finalPath = resolveResourcePath(safePath);
             return serveFile(finalPath);
 
         } catch (SecurityException e) {
@@ -52,7 +53,6 @@ public class StaticFileHandler implements Handler {
     private HttpResponse serveFile(Path filePath) throws IOException {
         byte[] content = Files.readAllBytes(filePath);
         String contentType = resolveContentType(filePath);
-
         return HttpResponse.ok(content, contentType);
     }
 
@@ -64,23 +64,6 @@ public class StaticFileHandler implements Handler {
         }
 
         return actualPath;
-    }
-
-    private void validatePathSecurity(Path filePath) {
-        if (!filePath.startsWith(rootDirectory)) {
-            log.error("Client wanted to access parent directory");
-            throw new SecurityException("Directory traversal attempt");
-        }
-    }
-
-    private Path getNormalizePath(String path) {
-        // remove leading '/' so resolve() works correctly
-        String requestedPath = path.startsWith("/") ?
-                path.substring(1).trim() : path;
-        log.info("Requested path {}", requestedPath);
-
-        // concat root and requestedPath
-        return rootDirectory.resolve(requestedPath).normalize();
     }
 
     private String resolveContentType(Path filePath) {

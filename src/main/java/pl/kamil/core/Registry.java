@@ -16,9 +16,11 @@ public class Registry {
     private static final Logger log = LoggerFactory.getLogger(Registry.class);
     public final Map<Route, Handler> commands = new HashMap<>();
     private final Handler staticFileHandler;
+    private final Handler postHandler;
 
-    public Registry(Handler handler) {
+    public Registry(Handler handler, Handler postHandler) {
         this.staticFileHandler = handler;
+        this.postHandler = postHandler;
     }
 
     public void addRoute(String httpMethod, String path, Handler handler) {
@@ -35,9 +37,12 @@ public class Registry {
         }
 
         if (request.getMethod() == HttpMethod.GET) {
+            log.info("In get handler");
             return staticFileHandler.handle(request);
         }
-
+        if (request.getMethod() == HttpMethod.POST) {
+            return postHandler.handle(request);
+        }
         // If no match exists , try the file system
         // The static handler will return 404 if file not found
         return HttpResponse.error(HttpStatus.NOT_ALLOWED);

@@ -4,18 +4,21 @@ import pl.kamil.core.HttpRequestParser;
 import pl.kamil.core.Registry;
 import pl.kamil.core.SimpleHttpServer;
 import pl.kamil.handlers.Handler;
+import pl.kamil.handlers.PostHandler;
 import pl.kamil.handlers.StaticFileHandler;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.ContentType;
 import pl.kamil.protocol.HttpMethod;
 import pl.kamil.protocol.HttpStatus;
+import pl.kamil.utility.PathUtils;
 
 import java.nio.file.Path;
 
 public class Main {
     public static void main(String[] args) {
-        Handler handler = new StaticFileHandler(Path.of("public").toAbsolutePath());
-        Registry registry = new Registry(handler);
+        Handler handler = new StaticFileHandler(new PathUtils(), Path.of("public").toAbsolutePath());
+        Handler postHandler = new PostHandler(new PathUtils(), Path.of("uploads").toAbsolutePath());
+        Registry registry = new Registry(handler, postHandler);
 
         registry.addRoute(HttpMethod.GET.toString(), "/JSON", (request) -> {
             HttpResponse response = new HttpResponse();
