@@ -2,6 +2,7 @@ package pl.kamil.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.kamil.error.BadRequestException;
 import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpMethod;
 
@@ -22,12 +23,9 @@ public class HttpRequestParser {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         HttpRequest request = new HttpRequest();
 
-        // Parse Request Line
         parseRequestLine(request, reader);
         parseHeaders(request, reader);
         parseBody(request, reader);
-
-        //initializeRequest(request, reader, firstLine);
 
         log.info("Successfully parsed {} request for {}", request.getMethod(), request.getPath());
         return request;
@@ -35,13 +33,14 @@ public class HttpRequestParser {
 
     private void parseRequestLine(HttpRequest request, BufferedReader reader) throws IOException {
         String firstLine = reader.readLine();
+
         if (firstLine == null || firstLine.isEmpty()){
-            throw new RuntimeException("First line was null or empty");
+            throw new BadRequestException("Request line null or empty");
         }
 
         String[] parts = firstLine.split(" ");
         if (parts.length < 2) {
-            throw new RemoteException("Invalid request line format");
+            throw new BadRequestException("Request line: not enough parts");
         }
 
         request.setMethod(HttpMethod.valueOf(parts[0].trim()));
@@ -84,6 +83,7 @@ public class HttpRequestParser {
         String contentLengthStr = request.getHeaders().get("Content-Length");
         if (contentLengthStr != null) {
             int contentLength = Integer.parseInt(contentLengthStr);
+
             if (contentLength > 0) {
                 request.setBody(readBody(reader, contentLength));
             }

@@ -2,7 +2,6 @@ package pl.kamil.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.kamil.protocol.ContentType;
 import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.HttpStatus;
@@ -13,26 +12,25 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
-public class StaticFileHandler implements Handler {
+public class GetStaticFileHandler implements Handler {
 
     private final PathUtils pathUtils;
 
-    private static final Logger log = LoggerFactory.getLogger(StaticFileHandler.class);
-    private final Path rootDirectory;
+    private static final Logger log = LoggerFactory.getLogger(GetStaticFileHandler.class);
+    private final Path rootDirectory = Path.of("public").toAbsolutePath();
 
-    public StaticFileHandler(PathUtils pathUtils, Path rootDirectory) {
+    public GetStaticFileHandler(PathUtils pathUtils) {
         this.pathUtils = pathUtils;
-        this.rootDirectory = rootDirectory;
     }
 
     @Override
     public HttpResponse handle(HttpRequest request) {
         try {
+
             // converts URL string to a clean Path
             Path safePath = pathUtils.getNormalizePath(rootDirectory, request.getPath());
-            // Validate if path is safe
+
             pathUtils.validatePathSecurity(rootDirectory, safePath);
             // If the path is a directory, we follow the standard convention of serving index.html
             Path finalPath = resolveResourcePath(safePath);

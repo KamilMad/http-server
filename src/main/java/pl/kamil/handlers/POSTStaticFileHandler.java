@@ -10,16 +10,16 @@ import pl.kamil.utility.PathUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 
-public class PostHandler implements Handler{
+public class POSTStaticFileHandler implements Handler{
 
-    private static final Logger log = LoggerFactory.getLogger(PostHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(POSTStaticFileHandler.class);
     private final PathUtils pathUtils;
-    private final Path uploadDirectory;
+    private final Path uploadDirectory = Path.of("public").toAbsolutePath();
 
-    public PostHandler(PathUtils pathUtils, Path rootDirectory) {
+    public POSTStaticFileHandler(PathUtils pathUtils) {
         this.pathUtils = pathUtils;
-        this.uploadDirectory = rootDirectory;
     }
 
     @Override
@@ -31,7 +31,6 @@ public class PostHandler implements Handler{
         }
 
         try {
-            // normalize path
             Path safePath = pathUtils.getNormalizePath(uploadDirectory, request.getPath());
 
             pathUtils.validatePathSecurity(uploadDirectory, safePath);
@@ -41,10 +40,11 @@ public class PostHandler implements Handler{
             log.info("Safe path is: {}", safePath);
             if (parent != null ) {
                 Files.createDirectories(parent);
-                log.info("Successfully crated dir structures ");
+                log.info("Successfully crated dir structure");
             }
 
-            // save the bytes
+            String fileName = UUID.randomUUID().toString();
+            safePath = safePath.resolve(fileName);
             Files.write(safePath, body);
 
             return HttpResponse.created();

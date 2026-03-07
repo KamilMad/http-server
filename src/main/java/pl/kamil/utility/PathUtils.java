@@ -9,13 +9,17 @@ public class PathUtils {
 
     private static final Logger log = LoggerFactory.getLogger(PathUtils.class);
 
-    public   Path getNormalizePath(Path rootDirectory, String path) {
-        // remove leading '/' so resolve() works correctly
-        String requestedPath = path.startsWith("/") ?
-                path.substring(1).trim() : path;
+    public Path getNormalizePath(Path rootDir, String requestPath) {
 
-        // concat root and requestedPath
-        return rootDirectory.resolve(requestedPath).normalize();
+        // remove leading '/' so resolve() works correctly
+        String cleanPath = requestPath.startsWith("/")
+                ? requestPath.substring(1)
+                : requestPath;
+
+        // concat both paths
+        return rootDir
+                .resolve(cleanPath)
+                .normalize();
     }
 
     public void validatePathSecurity(Path rootDirectory, Path filePath) {

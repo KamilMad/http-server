@@ -1,45 +1,30 @@
 package pl.kamil;
 
 import pl.kamil.core.HttpRequestParser;
-import pl.kamil.core.Registry;
+import pl.kamil.core.Router;
 import pl.kamil.core.SimpleHttpServer;
 import pl.kamil.handlers.Handler;
-import pl.kamil.handlers.PostHandler;
-import pl.kamil.handlers.StaticFileHandler;
-import pl.kamil.protocol.HttpResponse;
-import pl.kamil.protocol.ContentType;
-import pl.kamil.protocol.HttpMethod;
-import pl.kamil.protocol.HttpStatus;
+import pl.kamil.handlers.POSTStaticFileHandler;
+import pl.kamil.handlers.GetStaticFileHandler;
 import pl.kamil.utility.PathUtils;
 
 import java.nio.file.Path;
 
 public class Main {
     public static void main(String[] args) {
-        Handler handler = new StaticFileHandler(new PathUtils(), Path.of("public").toAbsolutePath());
-        Handler postHandler = new PostHandler(new PathUtils(), Path.of("uploads").toAbsolutePath());
-        Registry registry = new Registry(handler, postHandler);
 
-        registry.addRoute(HttpMethod.GET.toString(), "/JSON", (request) -> {
-            HttpResponse response = new HttpResponse();
-            response.setStatus(HttpStatus.OK);
-            response.setContentType(ContentType.JSON);
-            response.setBody("Some JSON body".getBytes());
+        PathUtils pathUtils = new PathUtils();
 
-            return response;
-        });
+        Handler getStaticFileHandler = new GetStaticFileHandler(pathUtils);
+        Handler postStaticFileHandler = new POSTStaticFileHandler(pathUtils);
 
-        registry.addRoute(HttpMethod.GET.toString(), "/TEXT", (request) -> {
-            HttpResponse response = new HttpResponse();
-            response.setStatus(HttpStatus.OK);
-            response.setContentType(ContentType.TEXT);
-            response.setBody("Some text body".getBytes());
-
-            return response;
-        });
+        Router router = new Router();
+        router.addRoute("GET", "/index.html", getStaticFileHandler);
+        router.addRoute("POST", "/**", postStaticFileHandler);
 
         HttpRequestParser httpRequestParser = new HttpRequestParser();
-        SimpleHttpServer server = new SimpleHttpServer(httpRequestParser, 10, registry);
+        SimpleHttpServer server = new SimpleHttpServer(httpRequestParser, 10, router);
+
         server.start();
     }
 }

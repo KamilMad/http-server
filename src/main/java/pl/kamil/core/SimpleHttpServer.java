@@ -20,21 +20,18 @@ public class SimpleHttpServer {
 
     private final HttpRequestParser httpRequestParser;
     private final ExecutorService executorService;
-    private final Registry registry;
+    private final Router router;
     private static final Logger logger = LoggerFactory.getLogger(SimpleHttpServer.class);
 
-    public SimpleHttpServer(HttpRequestParser httpRequestParser, int poolSize, Registry registry) {
+    public SimpleHttpServer(HttpRequestParser httpRequestParser, int poolSize, Router router) {
         this.httpRequestParser = httpRequestParser;
         this.executorService = Executors.newFixedThreadPool(poolSize);
-        this.registry = registry;
+        this.router = router;
     }
 
     public void start() {
-        try(ServerSocket server = new ServerSocket()) {
-            server.setReuseAddress(true);
-            server.bind(new InetSocketAddress(8080));
+        try(ServerSocket server = new ServerSocket(8080)) {
             logger.info("Server listening on port {}" , 8080);
-
 
             while (true) {
                 try {
@@ -50,25 +47,18 @@ public class SimpleHttpServer {
     }
 
     private void handleClient(Socket clientSocket) {
-        HttpResponse response = new HttpResponse();
         try (clientSocket;
              InputStream in = clientSocket.getInputStream();
              OutputStream out = clientSocket.getOutputStream()) {
 
             HttpRequest request = httpRequestParser.parse(in);
-            Thread.sleep(3000);
+            HttpResponse response = router.dispatch(request);
 
-
-            response = registry.dispatch(request);
             out.write(response.getBytes());
             out.flush();
 
-            logger.info("Client handled successfully.");
         } catch (Exception e) {
             logger.error("Error handling client: {}", e.getMessage());
-            response.setStatus(HttpStatus.BAD_REQUEST);
-            response.setContentType(ContentType.TEXT);
-            response.setBody("Invalid Request Format".getBytes());
         }
     }
 }

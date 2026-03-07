@@ -2,6 +2,7 @@ package pl.kamil.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.kamil.handlers.GetStaticFileHandler;
 import pl.kamil.protocol.Route;
 import pl.kamil.handlers.Handler;
 import pl.kamil.protocol.HttpRequest;
@@ -12,23 +13,17 @@ import pl.kamil.protocol.HttpStatus;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Registry {
-    private static final Logger log = LoggerFactory.getLogger(Registry.class);
-    public final Map<Route, Handler> commands = new HashMap<>();
-    private final Handler staticFileHandler;
-    private final Handler postHandler;
+public class Router {
+    private static final Logger log = LoggerFactory.getLogger(Router.class);
 
-    public Registry(Handler handler, Handler postHandler) {
-        this.staticFileHandler = handler;
-        this.postHandler = postHandler;
-    }
+    public final Map<Route, Handler> commands = new HashMap<>();
 
     public void addRoute(String httpMethod, String path, Handler handler) {
         commands.put(new Route(HttpMethod.valueOf(httpMethod), path), handler);
     }
 
     public HttpResponse dispatch(HttpRequest request) {
-        // Try to find an exact match (handler register in the registry)
+
         Route route = new Route(request.getMethod(), request.getPath());
         Handler handler = commands.get(route);
 
@@ -36,15 +31,6 @@ public class Registry {
             return handler.handle(request);
         }
 
-        if (request.getMethod() == HttpMethod.GET) {
-            log.info("In get handler");
-            return staticFileHandler.handle(request);
-        }
-        if (request.getMethod() == HttpMethod.POST) {
-            return postHandler.handle(request);
-        }
-        // If no match exists , try the file system
-        // The static handler will return 404 if file not found
         return HttpResponse.error(HttpStatus.NOT_ALLOWED);
     }
 
