@@ -1,7 +1,6 @@
 package readers;
 
 import org.junit.jupiter.api.Test;
-import pl.kamil.readers.FixedLengthReader;
 
 import java.io.*;
 import java.util.Arrays;

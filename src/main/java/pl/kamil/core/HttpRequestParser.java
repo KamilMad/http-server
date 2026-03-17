@@ -5,41 +5,67 @@ import org.slf4j.LoggerFactory;
 import pl.kamil.error.BadRequestException;
 import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpMethod;
+import pl.kamil.inputStreams.ChunkedInputStream;
+import pl.kamil.inputStreams.LimitedInputStream;
 
 import java.io.*;
-import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class HttpRequestParser {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRequestParser.class);
 
     public HttpRequest parse(InputStream in) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         HttpRequest request = new HttpRequest();
 
-        parseRequestLine(request, reader);
-        parseHeaders(request, reader);
-        parseBody(request, reader);
-
+        parseRequestLine(request, in);
+        parseHeaders(request, in);
+        parseBody(request, in);
         log.info("Successfully parsed {} request for {}", request.getMethod(), request.getPath());
         return request;
     }
 
-    private void parseRequestLine(HttpRequest request, BufferedReader reader) throws IOException {
-        String firstLine = reader.readLine();
+    private String readLine(InputStream in) throws IOException {
+        StringBuilder line = new StringBuilder();
 
-        if (firstLine == null || firstLine.isEmpty()){
-            throw new BadRequestException("Request line null or empty");
+        int b;
+        while ((b = in.read()) != -1) {
+            if (b == '\r') {
+                int next = in.read();
+                if (next == '\n') {
+                    break;
+                }
+                line.append((char) b);
+                if (next != -1 )
+                    line.append((char) next);
+            } else if (b == '\n') {
+                break;
+            } else {
+                line.append((char)b);
+            }
+
+        }
+        if (line.isEmpty() && b == -1) return null;
+        return line.toString();
+    }
+
+    private void parseRequestLine(HttpRequest request, InputStream in) throws IOException {
+        String line;
+
+        while ((line = readLine(in)) != null) {
+            if (!line.trim().isEmpty())
+                break;
         }
 
-        String[] parts = firstLine.split(" ");
-        if (parts.length < 2) {
+        if (line == null)
+            return;
+
+        String[] parts = line.split(" ");
+        if (parts.length < 3) {
             throw new BadRequestException("Request line: not enough parts");
         }
 
@@ -55,6 +81,7 @@ public class HttpRequestParser {
             request.setPath(rawPath);
             request.setQueryParams(Collections.emptyMap());
         }
+        log.info("Request line: {}", line);
     }
 
     private Map<String, String> extractQueryParams(String queryString) {
@@ -68,37 +95,28 @@ public class HttpRequestParser {
                 ));
     }
 
-    private void parseHeaders(HttpRequest request, BufferedReader reader) throws IOException {
-        String line = "";
+    private void parseHeaders(HttpRequest request, InputStream in) throws IOException {
         Map<String, String> headers = new HashMap<>();
 
-        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+        String line;
+
+        while ((line = readLine(in)) != null && !line.isEmpty()) {
             String[] header = line.split(":");
             headers.put(header[0].trim(), header[1].trim());
         }
-
         request.setHeaders(headers);
     }
-    private void parseBody(HttpRequest request, BufferedReader reader) throws IOException {
-        String contentLengthStr = request.getHeaders().get("Content-Length");
-        if (contentLengthStr != null) {
-            int contentLength = Integer.parseInt(contentLengthStr);
 
-            if (contentLength > 0) {
-                request.setBody(readBody(reader, contentLength));
-            }
+    private void parseBody(HttpRequest request, InputStream in) {
+        InputStream body;
+        if (request.getHeaders().containsKey("Content-Length")) {
+            int contentLength = Integer.parseInt(request.getHeaders().get("Content-Length"));
+            body = new LimitedInputStream(in, contentLength);
+        } else if ("chunked".equals(request.getHeaders().get("Transfer-Encoding"))){
+            body = new ChunkedInputStream(in);
+        } else {
+            body = InputStream.nullInputStream();
         }
-    }
-
-    private byte[] readBody(Reader reader, int contentLength) throws IOException {
-        char[] bodyBuffer = new char[contentLength];
-        int totalRead = 0;
-
-        while (totalRead < contentLength) {
-            int currentRead = reader.read(bodyBuffer, totalRead, contentLength - totalRead);
-            if (currentRead == -1) break;
-            totalRead += currentRead;
-        }
-        return new String(bodyBuffer, 0, totalRead).getBytes();
+        request.setBody(body);
     }
 }
