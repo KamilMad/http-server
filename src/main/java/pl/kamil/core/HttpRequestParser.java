@@ -9,11 +9,14 @@ import pl.kamil.inputStreams.ChunkedInputStream;
 import pl.kamil.inputStreams.LimitedInputStream;
 
 import java.io.*;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class HttpRequestParser {
 
@@ -61,38 +64,52 @@ public class HttpRequestParser {
                 break;
         }
 
-        if (line == null)
-            return;
+        if (line == null) {
+            throw new BadRequestException("Empty request");
+        }
 
         String[] parts = line.split(" ");
+
         if (parts.length < 3) {
-            throw new BadRequestException("Request line: not enough parts");
+            throw new BadRequestException("Invalid request line");
         }
 
-        request.setMethod(HttpMethod.valueOf(parts[0].trim()));
+        request.setHttpVersion(parts[2].trim());
+        try {
+            request.setMethod(HttpMethod.valueOf(parts[0].trim()));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid HTTP method:" + parts[0]);
+        }
 
         String rawPath = parts[1];
-        int queryIndex = rawPath.indexOf("?");
+        parseUrl(rawPath, request);
 
-        if (queryIndex != -1) {
-            request.setPath(rawPath.substring(0, queryIndex));
-            request.setQueryParams(extractQueryParams(rawPath.substring(queryIndex + 1)));
-        } else {
-            request.setPath(rawPath);
-            request.setQueryParams(Collections.emptyMap());
-        }
         log.info("Request line: {}", line);
     }
 
+    private void parseUrl(String path, HttpRequest request) {
+        int queryIndex = path.indexOf('?');
+
+        if (queryIndex != -1) {
+            request.setPath(path.substring(0, queryIndex));
+            request.setQueryParams(extractQueryParams(path.substring(queryIndex + 1)));
+        } else {
+            request.setPath(path);
+            request.setQueryParams(Collections.emptyMap());
+        }
+    }
     private Map<String, String> extractQueryParams(String queryString) {
         return Arrays.stream(queryString.split("&"))
                 .map(param -> param.split("=", 2))
-                .filter(parts -> parts.length == 2)
                 .collect(Collectors.toMap(
-                        parts -> parts[0],
-                        parts -> parts[1],
+                        parts -> decode(parts[0]),
+                        parts -> parts.length > 1 ? decode(parts[1]) : "",
                         (existing, replacement) -> existing
                 ));
+    }
+
+    private String decode(String value) {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 
     private void parseHeaders(HttpRequest request, InputStream in) throws IOException {

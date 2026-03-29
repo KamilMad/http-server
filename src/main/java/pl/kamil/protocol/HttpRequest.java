@@ -5,11 +5,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpRequest{
+    private String httpVersion;
     private HttpMethod method;
     private String path;
     private Map<String, String> headers;
     private InputStream body;
     private Map<String, String> queryParams;
+
+    public String getHttpVersion() {
+        return httpVersion;
+    }
+
+    public void setHttpVersion(String httpVersion) {
+        this.httpVersion = httpVersion;
+    }
 
     public HttpRequest() {
         this.headers = new HashMap<>();
