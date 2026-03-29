@@ -5,9 +5,10 @@ import org.slf4j.LoggerFactory;
 import pl.kamil.protocol.HttpRequest;
 import pl.kamil.protocol.HttpResponse;
 import pl.kamil.protocol.HttpStatus;
+import pl.kamil.utility.MimeTypes;
 import pl.kamil.utility.PathUtils;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -25,32 +26,25 @@ public class POSTStaticFileHandler implements Handler{
     @Override
     public HttpResponse handle(HttpRequest request) {
 
-        byte[] body = request.getBody();
-        if (body == null || body.length == 0) {
-            return HttpResponse.error(HttpStatus.BAD_REQUEST);
-        }
+        Path safePath = pathUtils.getNormalizePath(uploadDirectory, request.getPath());
+        pathUtils.validatePathSecurity(uploadDirectory, safePath);
+        Path parent = safePath.getParent();
+
+        String contentType = request.getHeaders().get("Content-Type");
+        String extension = contentType.substring(contentType.lastIndexOf('/') + 1);
+        log.info("Extension = {}", extension);
+
+
+        String fileName = UUID.randomUUID() + "." + extension;
+        safePath = safePath.resolve(fileName);
 
         try {
-            Path safePath = pathUtils.getNormalizePath(uploadDirectory, request.getPath());
+            Files.copy(request.getBody(), safePath);
+            return new HttpResponse.Builder(HttpStatus.CREATED).build();
 
-            pathUtils.validatePathSecurity(uploadDirectory, safePath);
-
-            Path parent = safePath.getParent();
-            log.info("Parent: {}", parent);
-            log.info("Safe path is: {}", safePath);
-            if (parent != null ) {
-                Files.createDirectories(parent);
-                log.info("Successfully crated dir structure");
-            }
-
-            String fileName = UUID.randomUUID().toString();
-            safePath = safePath.resolve(fileName);
-            Files.write(safePath, body);
-
-            return HttpResponse.created();
         } catch (IOException e) {
-            return HttpResponse.error(HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Exception when writing the file {}", e.getMessage());
+            return new HttpResponse.Builder(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
 }

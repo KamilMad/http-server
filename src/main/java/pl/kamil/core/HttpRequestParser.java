@@ -28,32 +28,10 @@ public class HttpRequestParser {
         parseRequestLine(request, in);
         parseHeaders(request, in);
         parseBody(request, in);
+
         log.info("Successfully parsed {} request for {}", request.getMethod(), request.getPath());
+
         return request;
-    }
-
-    private String readLine(InputStream in) throws IOException {
-        StringBuilder line = new StringBuilder();
-
-        int b;
-        while ((b = in.read()) != -1) {
-            if (b == '\r') {
-                int next = in.read();
-                if (next == '\n') {
-                    break;
-                }
-                line.append((char) b);
-                if (next != -1 )
-                    line.append((char) next);
-            } else if (b == '\n') {
-                break;
-            } else {
-                line.append((char)b);
-            }
-
-        }
-        if (line.isEmpty() && b == -1) return null;
-        return line.toString();
     }
 
     private void parseRequestLine(HttpRequest request, InputStream in) throws IOException {
@@ -122,6 +100,7 @@ public class HttpRequestParser {
             headers.put(header[0].trim(), header[1].trim());
         }
         request.setHeaders(headers);
+        Stream.of(request.getHeaders()).forEach(System.out::println);
     }
 
     private void parseBody(HttpRequest request, InputStream in) {
@@ -135,5 +114,29 @@ public class HttpRequestParser {
             body = InputStream.nullInputStream();
         }
         request.setBody(body);
+    }
+
+    private String readLine(InputStream in) throws IOException {
+        StringBuilder line = new StringBuilder();
+
+        int b;
+        while ((b = in.read()) != -1) {
+            if (b == '\r') {
+                int next = in.read();
+                if (next == '\n') {
+                    break;
+                }
+                line.append((char) b);
+                if (next != -1 )
+                    line.append((char) next);
+            } else if (b == '\n') {
+                break;
+            } else {
+                line.append((char)b);
+            }
+
+        }
+        if (line.isEmpty() && b == -1) return null;
+        return line.toString();
     }
 }

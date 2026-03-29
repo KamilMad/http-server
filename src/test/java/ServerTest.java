@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.kamil.core.HttpRequestParser;
-import pl.kamil.core.SimpleHttpServer;
+import pl.kamil.core.RequestHandler;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -22,7 +22,7 @@ public class ServerTest {
     public void setUp() {
         new Thread(() -> {
             HttpRequestParser parser = new HttpRequestParser();
-            SimpleHttpServer server = new SimpleHttpServer(parser, 10, null);
+            RequestHandler server = new RequestHandler(parser, 10, null);
             server.start();
         }).start();
 
@@ -30,7 +30,7 @@ public class ServerTest {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
 
-        };
+        }
     }
 
     @Test

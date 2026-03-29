@@ -51,7 +51,10 @@ public class GetStaticFileHandler implements Handler {
     private HttpResponse serveFile(Path filePath) throws IOException {
         byte[] content = Files.readAllBytes(filePath);
         String contentType = resolveContentType(filePath);
-        return HttpResponse.ok(content, contentType);
+        return new HttpResponse.Builder(HttpStatus.OK)
+                .header("Content-Type", contentType)
+                .body(content)
+                .build();
     }
 
     private Path resolveResourcePath(Path path) throws FileNotFoundException {
