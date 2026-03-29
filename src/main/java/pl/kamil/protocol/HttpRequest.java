@@ -1,15 +1,24 @@
 package pl.kamil.protocol;
 
-import java.util.Arrays;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 public class HttpRequest{
+    private String httpVersion;
     private HttpMethod method;
     private String path;
     private Map<String, String> headers;
-    private byte[] body;
+    private InputStream body;
     private Map<String, String> queryParams;
+
+    public String getHttpVersion() {
+        return httpVersion;
+    }
+
+    public void setHttpVersion(String httpVersion) {
+        this.httpVersion = httpVersion;
+    }
 
     public HttpRequest() {
         this.headers = new HashMap<>();
@@ -39,11 +48,11 @@ public class HttpRequest{
         this.headers = headers;
     }
 
-    public byte[] getBody() {
-        return body;
+    public InputStream getBody() {
+        return this.body;
     }
 
-    public void setBody(byte[] body) {
+    public void setBody(InputStream body) {
         this.body = body;
     }
 
@@ -53,16 +62,5 @@ public class HttpRequest{
 
     public void setQueryParams(Map<String, String> queryParams) {
         this.queryParams = queryParams;
-    }
-
-    @Override
-    public String toString() {
-        return "HttpRequest{" +
-                "method=" + method +
-                ", path='" + path + '\'' +
-                ", headers=" + headers +
-                ", body=" + Arrays.toString(body) +
-                ", queryParams=" + queryParams +
-                '}';
     }
 }

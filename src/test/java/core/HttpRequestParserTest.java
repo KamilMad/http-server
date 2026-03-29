@@ -2,17 +2,13 @@ package core;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import pl.kamil.core.HttpRequestParser;
-import pl.kamil.protocol.ContentType;
-import pl.kamil.protocol.HttpMethod;
 import pl.kamil.protocol.HttpRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
